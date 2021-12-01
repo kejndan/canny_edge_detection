@@ -2,9 +2,10 @@ from cv2 import cv2
 import os
 from utils import *
 import itertools
+from two_pass_connected_components_labeling import two_pass_connected_components
 path_to_images = 'images'
 sigma = 30
-T = 200
+T = 150
 t = 100
 
 
@@ -63,6 +64,16 @@ def hysteresis(img):
     result_img[result_img != 255] = 0
     return result_img
 
+def hysteresis_2(img):
+    strong_and_weak = np.where(img >= t, 1, 0)
+    painted = two_pass_connected_components(strong_and_weak)
+    strong_pixels = np.where(img > T)
+    colors = painted[strong_pixels[0], strong_pixels[1]]
+
+    pixels = np.isin(painted, colors) * 255
+    return pixels
+
+
 
 if __name__ == '__main__':
     img = read_image(os.path.join(path_to_images, 'emma.jpeg'))
@@ -80,6 +91,8 @@ if __name__ == '__main__':
 
     img = non_maximum_suppression(magnitude_img, round_angles)
     show_image(img,title='After NMS image',cmap='gray')
-    img = hysteresis(img)
+    img = hysteresis_2(img.astype(np.uint8))
+    # img = hysteresis(img)
     show_image(img, title='After hysteresis image',cmap='gray')
+    cv2.imwrite('result_img.jpeg', img)
     

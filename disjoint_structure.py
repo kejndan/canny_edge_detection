@@ -9,7 +9,7 @@ class Node:
 class DisjointStructure:
     def __init__(self):
         self.data = {}
-        self.max_value = 0
+        self.max_value = 1
 
     def make_set(self, x):
         self.data[x] = Node(x, 0, x)
@@ -25,15 +25,12 @@ class DisjointStructure:
 
     def union(self, x, y):
         x, y = self.find(x), self.find(y)
-
         if self.data[x].rank < self.data[y].rank:
             x, y = y,x
 
         self.data[y].parent = x
-
         if self.data[x].rank == self.data[y].rank:
             self.data[x].rank += 1
-            print(1)
 
 if __name__ == '__main__':
 
