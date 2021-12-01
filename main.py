@@ -4,9 +4,9 @@ from utils import *
 import itertools
 from two_pass_connected_components_labeling import two_pass_connected_components
 path_to_images = 'images'
-sigma = 30
-T = 150
-t = 100
+sigma = 21
+T = 200
+t = 20
 
 
 def calc_grad_img(img):
@@ -85,13 +85,15 @@ if __name__ == '__main__':
     show_image(grad_y, title='Gradient Y', cmap='gray')
     magnitude_img = np.sqrt(grad_x**2 + grad_y ** 2)
     show_image(magnitude_img, title='Magnitude image', cmap='gray')
+    cv2.imwrite('mag.jpeg', magnitude_img)
     angles = np.arctan2(grad_y,grad_x)
     round_angles = np.round((angles + np.pi) / (np.pi * 2) * 360 / 45, 0) * 45
     round_angles[round_angles == 360] = 0
 
     img = non_maximum_suppression(magnitude_img, round_angles)
     show_image(img,title='After NMS image',cmap='gray')
-    img = hysteresis_2(img.astype(np.uint8))
+    cv2.imwrite('nms.jpeg', img)
+    img = hysteresis_2(img)
     # img = hysteresis(img)
     show_image(img, title='After hysteresis image',cmap='gray')
     cv2.imwrite('result_img.jpeg', img)
