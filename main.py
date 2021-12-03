@@ -4,9 +4,9 @@ from utils import *
 import itertools
 from two_pass_connected_components_labeling import two_pass_connected_components
 path_to_images = 'images'
-sigma = 21
-T = 200
-t = 20
+sigma = 1
+T = 0.18
+t = 0.06
 
 
 def calc_grad_img(img):
@@ -65,9 +65,11 @@ def hysteresis(img):
     return result_img
 
 def hysteresis_2(img):
-    strong_and_weak = np.where(img >= t, 1, 0)
+    upper_bound = img.max()*T
+    lower_bound = img.max()*t
+    strong_and_weak = np.where(img >= lower_bound, 1, 0)
     painted = two_pass_connected_components(strong_and_weak)
-    strong_pixels = np.where(img > T)
+    strong_pixels = np.where(img > upper_bound)
     colors = painted[strong_pixels[0], strong_pixels[1]]
 
     pixels = np.isin(painted, colors) * 255
@@ -78,7 +80,7 @@ def hysteresis_2(img):
 if __name__ == '__main__':
     img = read_image(os.path.join(path_to_images, 'emma.jpeg'))
     show_image(img, title='Gray image', cmap='gray')
-    img_smooth = np.float32(cv2.GaussianBlur(img, (3, 3), sigma))
+    img_smooth = np.float32(cv2.GaussianBlur(img, (5, 5), sigma))
     show_image(img_smooth , title='Smooth image', cmap='gray')
     grad_x, grad_y = calc_grad_img(img_smooth)
     show_image(grad_x, title='Gradient X', cmap='gray')
