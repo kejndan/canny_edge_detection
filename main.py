@@ -25,11 +25,11 @@ def non_maximum_suppression(img, angles):
         for j in range(1, angles.shape[1] - 1):
             if angles[i, j] == 0 or angles[i, j] == 180:
                 temp = max(img[i, j - 1], img[i, j + 1])
-            elif angles[i, j] == 45 or angles[i, j] == 225:
+            elif angles[i, j] == 45 or angles[i, j] == -45:
                 temp = max(img[i - 1, j + 1], img[i + 1, j - 1])
-            elif angles[i, j] == 90 or angles[i, j] == 270:
+            elif angles[i, j] == 90 or angles[i, j] == -90:
                 temp = max(img[i + 1, j], img[i - 1, j])
-            elif angles[i, j] == 135 or angles[i, j] == 315:
+            elif angles[i, j] == 135 or angles[i, j] == -135:
                 temp = max(img[i - 1, j - 1], img[i + 1, j + 1])
 
             if img[i, j] >= temp:
@@ -89,8 +89,8 @@ if __name__ == '__main__':
     show_image(magnitude_img, title='Magnitude image', cmap='gray')
     cv2.imwrite('mag.jpeg', magnitude_img)
     angles = np.arctan2(grad_y,grad_x)
-    round_angles = np.round((angles + np.pi) / (np.pi * 2) * 360 / 45, 0) * 45
-    round_angles[round_angles == 360] = 0
+    round_angles = np.round((angles) /np.pi * 180 / 45, 0) * 45
+    round_angles[round_angles == -180] = 180
 
     img = non_maximum_suppression(magnitude_img, round_angles)
     show_image(img,title='After NMS image',cmap='gray')
