@@ -12,26 +12,28 @@ def calc_grad_img(img):
     grad_x = cv2.filter2D(img, ddepth=-1, kernel=x_filter)
     return grad_x, grad_y
 
-
 def non_maximum_suppression(magnitude_img, angles):
+    pi_8 = 180/8
+
+    angles = np.where((-180 <= angles) & (angles < -180 + pi_8), -angles, angles)
     clear_img = np.zeros_like(magnitude_img)
     cropped_angles = angles[1:-1, 1:-1]
 
     directions = {0:{'angles':(0, 180), 'pixels':[(0,-1), (0, 1)]},
-                  1:{'angles':(45, -45), 'pixels':[(-1,1), (1, -1)]},
+                  1:{'angles':(-45, 135), 'pixels':[(1,-1), (-1, 1)]},
                   2:{'angles':(90, -90), 'pixels':[(1,0), (-1, 0)]},
-                  3:{'angles':(135, -135), 'pixels':[(-1,-1), (1, 1)]}}
+                  3:{'angles':(-135, 45), 'pixels':[(-1,-1), (1, 1)]}}
 
     for dir in directions.values():
-        lines_0_180 = np.where((cropped_angles == dir['angles'][0]) | (cropped_angles == dir['angles'][1]))
-        lines_0_180_y = lines_0_180[0] + 1
-        lines_0_180_x = lines_0_180[1] + 1
+        line = np.where(((dir['angles'][0] + pi_8 > cropped_angles)&(cropped_angles >= dir['angles'][0] - pi_8))
+                               |((dir['angles'][1] + pi_8 > cropped_angles)&(cropped_angles >= dir['angles'][1] - pi_8)))
+        lines_y = line[0] + 1
+        lines_x = line[1] + 1
 
-        temp = np.maximum(magnitude_img[lines_0_180_y + dir['pixels'][0][0], lines_0_180_x + dir['pixels'][0][1]],
-                          magnitude_img[lines_0_180_y + dir['pixels'][1][0], lines_0_180_x + dir['pixels'][1][1]])
-        idxs_change_vals = np.where(magnitude_img[lines_0_180_y, lines_0_180_x] >= temp)[0]
-        clear_img[lines_0_180_y[idxs_change_vals], lines_0_180_x[idxs_change_vals]] = temp[idxs_change_vals]
-
+        temp = np.maximum(magnitude_img[lines_y + dir['pixels'][0][0], lines_x + dir['pixels'][0][1]],
+                          magnitude_img[lines_y + dir['pixels'][1][0], lines_x + dir['pixels'][1][1]])
+        idxs_change_vals = np.where(magnitude_img[lines_y, lines_x] > temp)[0]
+        clear_img[lines_y[idxs_change_vals], lines_x[idxs_change_vals]] = magnitude_img[lines_y[idxs_change_vals], lines_x[idxs_change_vals]]
     return clear_img
 
 def hysteresis_v1(img, upper_thr, lower_thr):
@@ -63,7 +65,7 @@ def hysteresis_v1(img, upper_thr, lower_thr):
     return result_img
 
 def hysteresis_v2(img, upper_thr, lower_thr):
-    strong_and_weak = np.where(img >= lower_thr, 1, 0)
+    strong_and_weak = np.where(img > lower_thr, 1, 0)
     painted = two_pass_connected_components(strong_and_weak)
     strong_pixels = np.where(img > upper_thr)
     colors = painted[strong_pixels[0], strong_pixels[1]]
@@ -71,18 +73,13 @@ def hysteresis_v2(img, upper_thr, lower_thr):
     return pixels
 
 def canny_edge_detection(img, upper_thr, lower_thr, kernel_size_blur, sigma_blur):
-    img_smooth = np.float32(cv2.GaussianBlur(img, (kernel_size_blur, kernel_size_blur), sigma_blur))
+    img_smooth = cv2.GaussianBlur(img.astype(np.float32), (kernel_size_blur, kernel_size_blur), sigma_blur)
     grad_x, grad_y = calc_grad_img(img_smooth)
     magnitude_img = np.sqrt(np.power(grad_x, 2) + np.power(grad_y, 2))
-
-    angles = np.arctan2(grad_y, grad_x)
-    round_angles = np.round((angles) / np.pi * 180 / 45, 0) * 45
-    round_angles[round_angles == -180] = 180
-
-    img = non_maximum_suppression(magnitude_img, round_angles.astype(np.int32))
-
-    upper_bound = img.max()*upper_thr
-    lower_bound = img.max()*lower_thr
+    angles = np.degrees(np.arctan2(grad_y, grad_x))
+    img = non_maximum_suppression(magnitude_img, angles)
+    upper_bound = magnitude_img.max()*upper_thr
+    lower_bound = magnitude_img.max()*lower_thr
     img = hysteresis_v2(img, upper_bound, lower_bound)
     return img
 
