@@ -14,4 +14,4 @@ if __name__ == '__main__':
     img = read_image('images/emma.jpeg')
     res_img = canny_edge_detection(img, args.upper_thr, args.lower_thr, args.kernel_size, args.sigma)
     show_image(res_img)
-    save_image(res_img, 'result_img.jpeg')
+    save_image(res_img, 'result/result_img.jpeg')
