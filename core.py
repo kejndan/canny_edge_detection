@@ -14,7 +14,6 @@ def calc_grad_img(img):
 
 def non_maximum_suppression(magnitude_img, angles):
     pi_8 = 180/8
-
     angles = np.where((-180 <= angles) & (angles < -180 + pi_8), -angles, angles)
     clear_img = np.zeros_like(magnitude_img)
     cropped_angles = angles[1:-1, 1:-1]
@@ -29,7 +28,6 @@ def non_maximum_suppression(magnitude_img, angles):
                                |((dir['angles'][1] + pi_8 > cropped_angles)&(cropped_angles >= dir['angles'][1] - pi_8)))
         lines_y = line[0] + 1
         lines_x = line[1] + 1
-
         temp = np.maximum(magnitude_img[lines_y + dir['pixels'][0][0], lines_x + dir['pixels'][0][1]],
                           magnitude_img[lines_y + dir['pixels'][1][0], lines_x + dir['pixels'][1][1]])
         idxs_change_vals = np.where(magnitude_img[lines_y, lines_x] > temp)[0]
